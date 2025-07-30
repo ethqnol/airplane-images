@@ -1,0 +1,69 @@
+---
+import Layout from '../layouts/Layout.astro';
+import UploadForm from '../components/UploadForm.astro';
+---
+
+<Layout title="Upload Airplane Image">
+  <main>
+    <div class="container">
+      <h1>Upload Image</h1>
+      <p class="subtitle">Add a new aircraft image</p>
+      
+      <UploadForm />
+      
+      <div class="guidelines">
+        <h3>Upload Guidelines</h3>
+        <ul>
+          <li>Images must be of aircraft or aviation-related content</li>
+          <li>Maximum file size: 10MB</li>
+          <li>Supported formats: JPG, PNG, WebP</li>
+          <li>Please provide accurate aircraft information when possible</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  h1 {
+    text-align: center;
+    color: #f4f4f5;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #a1a1aa;
+    margin-bottom: 3rem;
+    font-size: 1.1rem;
+  }
+
+  .guidelines {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: #18181b;
+    border-radius: 8px;
+    border: 1px solid #27272a;
+  }
+
+  .guidelines h3 {
+    margin-top: 0;
+    color: #f4f4f5;
+  }
+
+  .guidelines ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .guidelines li {
+    margin-bottom: 0.5rem;
+    color: #a1a1aa;
+  }
+</style>

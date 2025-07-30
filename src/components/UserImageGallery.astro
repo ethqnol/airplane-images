@@ -1,0 +1,685 @@
+---
+import '../styles/gallery.css';
+
+interface Props {
+  userId: string;
+  aircraftType?: string;
+  titleSearch?: string;
+}
+
+const { userId, aircraftType, titleSearch } = Astro.props;
+
+
+const params = new URLSearchParams({
+  page: '1',
+  limit: '12',
+  userId: userId,
+});
+
+if (aircraftType) params.append('aircraftType', aircraftType);
+if (titleSearch) params.append('title', titleSearch);
+
+const baseUrl = Astro.url.origin;
+console.log('UserImageGallery - Fetching with params:', params.toString());
+console.log('UserImageGallery - UserId in params:', userId);
+const response = await fetch(`${baseUrl}/api/images?${params}`).catch(() => null);
+const data = response?.ok ? await response.json() : { images: [], pagination: null };
+const { images = [], pagination = null } = data;
+console.log('UserImageGallery - Received images count:', images?.length || 0);
+console.log('UserImageGallery - Sample image:', images?.[0] ? { id: images[0].id, user_id: images[0].user_id, title: images[0].title } : 'none');
+
+function formatDate(dateString: string) {
+  if (!dateString) return 'Unknown date';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch (error) {
+    return 'Invalid date';
+  }
+}
+---
+
+<div class="gallery-container user-gallery">
+  {images.length === 0 ? (
+    <div class="no-images">
+      <p>You haven't uploaded any images yet.</p>
+      <a href="/upload" class="upload-link">Upload your first image</a>
+    </div>
+  ) : (
+    <>
+      <div class="image-grid">
+        {images.map((image: any) => (
+          <div class="image-card" data-image-id={image.id}>
+            <img
+              src={`/api/images/${image.r2_key}`}
+              alt={image.title || image.original_name}
+              loading="lazy"
+            />
+            <div class="image-info">
+              <h3>{image.title || image.original_name}</h3>
+              {image.aircraft_type && (
+                <p class="aircraft-type">{image.aircraft_type}</p>
+              )}
+              <div class="meta">
+                <span class="date">{formatDate(image.uploaded_at)}</span>
+                <button class="delete-btn" data-image-id={image.id} data-image-title={image.title || image.original_name}>
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+            
+            <script type="application/json" class="image-data" set:html={JSON.stringify({
+              id: image.id,
+              r2_key: image.r2_key,
+              title: image.title || image.original_name,
+              description: image.description,
+              aircraft_type: image.aircraft_type,
+              location: image.location,
+              date_taken: image.date_taken,
+              user_name: image.user_name,
+              uploaded_at: image.uploaded_at,
+              is_owner: true
+            })}></script>
+          </div>
+        ))}
+      </div>
+
+      {pagination && pagination.totalPages > 1 && (
+        <div class="pagination">
+          {pagination.hasPrev && (
+            <a href={`?${new URLSearchParams({...Object.fromEntries(new URLSearchParams(Astro.url.search)), page: (pagination.page - 1).toString()}).toString()}`} class="page-btn">
+              ← Previous
+            </a>
+          )}
+          
+          <span class="page-info">
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          
+          {pagination.hasNext && (
+            <a href={`?${new URLSearchParams({...Object.fromEntries(new URLSearchParams(Astro.url.search)), page: (pagination.page + 1).toString()}).toString()}`} class="page-btn">
+              Next →
+            </a>
+          )}
+        </div>
+      )}
+    </>
+  )}
+
+  <!-- Enhanced Modal -->
+  <div id="modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content enhanced">
+      <button class="modal-close" id="modalClose">×</button>
+      
+      <img id="modalImage" src="" alt="" />
+      
+      <div class="modal-info">
+        <div class="modal-header">
+          <h2 id="modalTitle"></h2>
+          <div class="modal-actions" id="modalActions" style="display: none;">
+            <button class="delete-modal-btn" id="deleteModalBtn">🗑️ Delete Image</button>
+          </div>
+        </div>
+        <p id="modalDescription" class="description" style="display: none;"></p>
+        
+        <div class="details" id="modalDetails">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content delete-modal">
+      <h3>Delete Image</h3>
+      <p>Are you sure you want to delete "<span id="deleteImageTitle"></span>"?</p>
+      <p class="warning">This action cannot be undone.</p>
+      <div class="delete-actions">
+        <button class="cancel-btn" id="cancelDeleteBtn">Cancel</button>
+        <button class="confirm-delete-btn" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .gallery-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .no-images {
+    text-align: center;
+    padding: 4rem;
+    color: #a1a1aa;
+  }
+
+  .upload-link {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .upload-link:hover {
+    background: #1d4ed8;
+  }
+
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .image-card {
+    background: #18181b;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #27272a;
+  }
+
+  .image-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    border-color: #3f3f46;
+  }
+
+  .image-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  .image-info {
+    padding: 1rem;
+  }
+
+  .image-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: #f4f4f5;
+    line-height: 1.3;
+  }
+
+  .aircraft-type {
+    margin: 0 0 0.75rem 0;
+    color: #60a5fa;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #a1a1aa;
+  }
+
+  .delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .delete-btn:hover {
+    background: #c82333;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .page-btn {
+    padding: 0.75rem 1.5rem;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .page-btn:hover {
+    background: #1d4ed8;
+  }
+
+  .page-info {
+    font-weight: 500;
+    color: #e4e4e7;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+  }
+
+  .modal-content {
+    background: #18181b;
+    border-radius: 12px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #27272a;
+  }
+
+  .modal-content.enhanced {
+    max-width: 1200px;
+    width: 90vw;
+    max-height: 90vh;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    overflow: hidden;
+  }
+
+  .modal-content.enhanced img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #09090b;
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+  }
+
+  .modal-info {
+    padding: 2rem;
+    overflow-y: auto;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    color: #f4f4f5;
+    flex: 1;
+    margin-right: 1rem;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .delete-modal-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .delete-modal-btn:hover {
+    background: #c82333;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 1001;
+  }
+
+  .description {
+    color: #a1a1aa;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .details {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .detail {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .detail strong {
+    min-width: 100px;
+    color: #e4e4e7;
+  }
+
+  .delete-modal {
+    max-width: 400px;
+    width: 90vw;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .delete-modal h3 {
+    margin-top: 0;
+    color: #f4f4f5;
+  }
+
+  .warning {
+    color: #dc3545;
+    font-weight: 500;
+    margin-bottom: 2rem;
+  }
+
+  .delete-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .cancel-btn {
+    padding: 0.75rem 1.5rem;
+    background: #52525b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .cancel-btn:hover {
+    background: #3f3f46;
+  }
+
+  .confirm-delete-btn {
+    padding: 0.75rem 1.5rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .confirm-delete-btn:hover {
+    background: #c82333;
+  }
+
+  @media (max-width: 768px) {
+    .gallery-container {
+      padding: 1rem;
+    }
+
+    .image-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .pagination {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .modal-overlay {
+      padding: 1rem;
+    }
+
+    .modal-content.enhanced {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto;
+      max-height: 90vh;
+    }
+
+    .modal-content.enhanced img {
+      border-radius: 0;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+    }
+
+    .modal-info {
+      padding: 1rem;
+      border-radius: 0;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+
+    .modal-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .modal-header h2 {
+      margin-right: 0;
+    }
+  }
+</style>
+
+<script>
+  function formatDate(dateString) {
+    if (!dateString) return 'Unknown date';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch (error) {
+      return 'Invalid date';
+    }
+  }
+
+
+  const imageCards = document.querySelectorAll('.image-card');
+  const modal = document.getElementById('modal');
+  const modalClose = document.getElementById('modalClose');
+  const modalImage = document.getElementById('modalImage');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalDescription = document.getElementById('modalDescription');
+  const modalDetails = document.getElementById('modalDetails');
+  const modalActions = document.getElementById('modalActions');
+  const deleteModalBtn = document.getElementById('deleteModalBtn');
+
+
+  const deleteModal = document.getElementById('deleteModal');
+  const deleteImageTitle = document.getElementById('deleteImageTitle');
+  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+  let currentImageId = null;
+
+  imageCards.forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        return;
+      }
+
+      const dataScript = card.querySelector('.image-data');
+      if (dataScript) {
+        const imageData = JSON.parse(dataScript.textContent || '{}');
+        
+        modalImage.src = `/api/images/${imageData.r2_key}`;
+        modalImage.alt = imageData.title;
+        modalTitle.textContent = imageData.title;
+        currentImageId = imageData.id;
+        
+        if (imageData.description) {
+          modalDescription.textContent = imageData.description;
+          modalDescription.style.display = 'block';
+        } else {
+          modalDescription.style.display = 'none';
+        }
+        
+        let detailsHTML = '';
+        
+        if (imageData.aircraft_type) {
+          detailsHTML += `<div class="detail"><strong>Aircraft:</strong> <span>${imageData.aircraft_type}</span></div>`;
+        }
+        
+        if (imageData.location) {
+          detailsHTML += `<div class="detail"><strong>Location:</strong> <span>${imageData.location}</span></div>`;
+        }
+        
+        if (imageData.date_taken) {
+          detailsHTML += `<div class="detail"><strong>Date Taken:</strong> <span>${formatDate(imageData.date_taken)}</span></div>`;
+        }
+        
+        detailsHTML += `<div class="detail"><strong>Uploaded by:</strong> <span>${imageData.user_name}</span></div>`;
+        detailsHTML += `<div class="detail"><strong>Uploaded:</strong> <span>${formatDate(imageData.uploaded_at)}</span></div>`;
+        
+        modalDetails.innerHTML = detailsHTML;
+
+        if (imageData.is_owner) {
+          modalActions.style.display = 'flex';
+        } else {
+          modalActions.style.display = 'none';
+        }
+
+        modal.style.display = 'flex';
+      }
+    });
+  });
+
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const imageId = btn.getAttribute('data-image-id');
+      const imageTitle = btn.getAttribute('data-image-title');
+      
+      currentImageId = imageId;
+      deleteImageTitle.textContent = imageTitle;
+      deleteModal.style.display = 'flex';
+    });
+  });
+
+  deleteModalBtn?.addEventListener('click', () => {
+    if (currentImageId) {
+      const imageTitle = modalTitle.textContent;
+      deleteImageTitle.textContent = imageTitle;
+      modal.style.display = 'none';
+      deleteModal.style.display = 'flex';
+    }
+  });
+
+  confirmDeleteBtn?.addEventListener('click', async () => {
+    if (!currentImageId) return;
+
+    try {
+      const response = await fetch(`/api/images/${currentImageId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+
+        const imageCard = document.querySelector(`[data-image-id="${currentImageId}"]`);
+        if (imageCard) {
+          imageCard.remove();
+        }
+        
+
+        deleteModal.style.display = 'none';
+        modal.style.display = 'none';
+        
+
+        const remainingCards = document.querySelectorAll('.image-card');
+        if (remainingCards.length === 0) {
+          window.location.reload();
+        }
+      } else {
+        alert('Failed to delete image. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      alert('Failed to delete image. Please try again.');
+    }
+
+    currentImageId = null;
+  });
+
+
+  cancelDeleteBtn?.addEventListener('click', () => {
+    deleteModal.style.display = 'none';
+    currentImageId = null;
+  });
+
+
+  modalClose?.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+
+  deleteModal?.addEventListener('click', (e) => {
+    if (e.target === deleteModal) {
+      deleteModal.style.display = 'none';
+    }
+  });
+
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (modal.style.display === 'flex') {
+        modal.style.display = 'none';
+      }
+      if (deleteModal.style.display === 'flex') {
+        deleteModal.style.display = 'none';
+      }
+    }
+  });
+</script>

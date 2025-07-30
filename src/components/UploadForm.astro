@@ -1,0 +1,469 @@
+---
+const aircraft = [
+  {"icao":"A319","iata":"319","name":"Airbus A319","displayName":"Airbus A319 (A319/319)"},
+  {"icao":"A320","iata":"320","name":"Airbus A320","displayName":"Airbus A320 (A320/320)"},
+  {"icao":"A321","iata":"321","name":"Airbus A321","displayName":"Airbus A321 (A321/321)"},
+  {"icao":"A332","iata":"332","name":"Airbus A330-200","displayName":"Airbus A330-200 (A332/332)"},
+  {"icao":"A333","iata":"333","name":"Airbus A330-300","displayName":"Airbus A330-300 (A333/333)"},
+  {"icao":"A338","iata":"338","name":"Airbus A330-800neo","displayName":"Airbus A330-800neo (A338/338)"},
+  {"icao":"A339","iata":"339","name":"Airbus A330-900neo","displayName":"Airbus A330-900neo (A339/339)"},
+  {"icao":"A342","iata":"342","name":"Airbus A340-200","displayName":"Airbus A340-200 (A342/342)"},
+  {"icao":"A343","iata":"343","name":"Airbus A340-300","displayName":"Airbus A340-300 (A343/343)"},
+  {"icao":"A345","iata":"345","name":"Airbus A340-500","displayName":"Airbus A340-500 (A345/345)"},
+  {"icao":"A346","iata":"346","name":"Airbus A340-600","displayName":"Airbus A340-600 (A346/346)"},
+  {"icao":"A35K","iata":"351","name":"Airbus A350-1000","displayName":"Airbus A350-1000 (A35K/351)"},
+  {"icao":"A359","iata":"359","name":"Airbus A350-900","displayName":"Airbus A350-900 (A359/359)"},
+  {"icao":"A380","iata":"380","name":"Airbus A380-800","displayName":"Airbus A380-800 (A380/380)"},
+  {"icao":"B712","iata":"717","name":"Boeing 717-200","displayName":"Boeing 717-200 (B712/717)"},
+  {"icao":"B3XM","iata":"7MX","name":"Boeing 737 MAX 10","displayName":"Boeing 737 MAX 10 (B3XM/7MX)"},
+  {"icao":"B38M","iata":"7M8","name":"Boeing 737 MAX 8","displayName":"Boeing 737 MAX 8 (B38M/7M8)"},
+  {"icao":"B39M","iata":"7M9","name":"Boeing 737 MAX 9","displayName":"Boeing 737 MAX 9 (B39M/7M9)"},
+  {"icao":"B733","iata":"733","name":"Boeing 737-300","displayName":"Boeing 737-300 (B733/733)"},
+  {"icao":"B734","iata":"734","name":"Boeing 737-400","displayName":"Boeing 737-400 (B734/734)"},
+  {"icao":"B735","iata":"735","name":"Boeing 737-500","displayName":"Boeing 737-500 (B735/735)"},
+  {"icao":"B736","iata":"736","name":"Boeing 737-600","displayName":"Boeing 737-600 (B736/736)"},
+  {"icao":"B737","iata":"737","name":"Boeing 737-700","displayName":"Boeing 737-700 (B737/737)"},
+  {"icao":"B738","iata":"738","name":"Boeing 737-800","displayName":"Boeing 737-800 (B738/738)"},
+  {"icao":"B739","iata":"739","name":"Boeing 737-900","displayName":"Boeing 737-900 (B739/739)"},
+  {"icao":"B744","iata":"744","name":"Boeing 747-400","displayName":"Boeing 747-400 (B744/744)"},
+  {"icao":"B748","iata":"748","name":"Boeing 747-8","displayName":"Boeing 747-8 (B748/748)"},
+  {"icao":"B752","iata":"752","name":"Boeing 757-200","displayName":"Boeing 757-200 (B752/752)"},
+  {"icao":"B753","iata":"753","name":"Boeing 757-300","displayName":"Boeing 757-300 (B753/753)"},
+  {"icao":"B762","iata":"762","name":"Boeing 767-200","displayName":"Boeing 767-200 (B762/762)"},
+  {"icao":"B763","iata":"763","name":"Boeing 767-300","displayName":"Boeing 767-300 (B763/763)"},
+  {"icao":"B764","iata":"764","name":"Boeing 767-400","displayName":"Boeing 767-400 (B764/764)"},
+  {"icao":"B772","iata":"772","name":"Boeing 777-200","displayName":"Boeing 777-200 (B772/772)"},
+  {"icao":"B77L","iata":"77L","name":"Boeing 777-200LR","displayName":"Boeing 777-200LR (B77L/77L)"},
+  {"icao":"B773","iata":"773","name":"Boeing 777-300","displayName":"Boeing 777-300 (B773/773)"},
+  {"icao":"B77W","iata":"77W","name":"Boeing 777-300ER","displayName":"Boeing 777-300ER (B77W/77W)"},
+  {"icao":"B78J","iata":"781","name":"Boeing 787-10","displayName":"Boeing 787-10 (B78J/781)"},
+  {"icao":"B78X","iata":"788","name":"Boeing 787-8","displayName":"Boeing 787-8 (B78X/788)"},
+  {"icao":"B789","iata":"789","name":"Boeing 787-9","displayName":"Boeing 787-9 (B789/789)"},
+  {"icao":"Other","iata":"Other","name":"Other","displayName":"Other (Other/Other)"}
+];
+---
+
+<div class="upload-container">
+  <form method="POST" action="/api/upload" enctype="multipart/form-data" class="upload-form" id="uploadForm">
+    <div class="form-group">
+      <label for="image">Airplane Image *</label>
+      <div class="file-input-wrapper">
+        <input
+          type="file"
+          id="image"
+          name="image"
+          accept="image/*"
+          required
+          class="file-input"
+          style="display: none;"
+        />
+        <div class="file-input-label" onclick="document.getElementById('image').click()">
+          <span class="file-input-text" id="fileText">Choose file...</span>
+          <span class="file-input-button">Browse</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="title">Title</label>
+      <input
+        type="text"
+        id="title"
+        name="title"
+        placeholder="e.g., Boeing 747 at sunset"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea
+        id="description"
+        name="description"
+        placeholder="Describe the aircraft and scene..."
+        rows="3"
+      ></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="aircraftType">Aircraft Type</label>
+        <select id="aircraftType" name="aircraftType">
+          <option value="">Select aircraft type...</option>
+          {aircraft.map((plane: any) => (
+            <option value={plane.icao}>{plane.displayName}</option>
+          ))}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="location">Location</label>
+        <input
+          type="text"
+          id="location"
+          name="location"
+          placeholder="e.g., LAX Airport"
+        />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="dateTaken">Date Taken</label>
+      <input type="date" id="dateTaken" name="dateTaken" />
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">
+      Upload Image
+    </button>
+
+    <div id="message" class="message" style="display: none;"></div>
+  </form>
+
+  <!-- Success Menu -->
+  <div id="successMenu" class="success-menu" style="display: none;">
+    <div class="success-icon">✓</div>
+    <h2>Upload Successful!</h2>
+    <p>Your image has been uploaded successfully.</p>
+    
+    <div class="success-actions">
+      <button onclick="window.location.href='/gallery'" class="btn-primary">
+        View Gallery
+      </button>
+      <button onclick="resetForm()" class="btn-secondary">
+        Upload Another
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .upload-container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .success-menu {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: #18181b;
+    border-radius: 8px;
+    border: 1px solid #27272a;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    background: #22c55e;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0 auto 1.5rem;
+  }
+
+  .success-menu h2 {
+    color: #f4f4f5;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+  }
+
+  .success-menu p {
+    color: #a1a1aa;
+    margin-bottom: 2rem;
+  }
+
+  .success-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 0.875rem 1.75rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-primary {
+    background: #2563eb;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #1d4ed8;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: #a1a1aa;
+    border: 1px solid #3f3f46;
+  }
+
+  .btn-secondary:hover {
+    background: #27272a;
+    color: #f4f4f5;
+  }
+
+  .upload-form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #18181b;
+    border-radius: 8px;
+    border: 1px solid #27272a;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .upload-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #f4f4f5;
+  }
+
+  .upload-form input[type="text"], 
+  .upload-form input[type="date"], 
+  .upload-form textarea, 
+  .upload-form select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #3f3f46;
+    border-radius: 4px;
+    font-size: 1rem;
+    background: #09090b;
+    color: #e4e4e7;
+    box-sizing: border-box;
+  }
+
+  .upload-form input[type="text"]:focus, 
+  .upload-form input[type="date"]:focus, 
+  .upload-form textarea:focus, 
+  .upload-form select:focus {
+    outline: none;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96,165,250,0.25);
+  }
+
+  .upload-form select {
+    cursor: pointer;
+  }
+
+  .file-input-wrapper {
+    position: relative;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .file-input-label {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    border: 1px solid #3f3f46;
+    border-radius: 4px;
+    background: #09090b;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .file-input-label:hover {
+    border-color: #60a5fa;
+  }
+
+  .file-input:focus + .file-input-label {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96,165,250,0.25);
+  }
+
+  .file-input-text {
+    flex: 1;
+    padding: 0.75rem;
+    color: #a1a1aa;
+    font-size: 1rem;
+  }
+
+  .file-input-button {
+    padding: 0.75rem 1rem;
+    background: #27272a;
+    border-left: 1px solid #3f3f46;
+    color: #e4e4e7;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+  }
+
+  .file-input-label:hover .file-input-button {
+    background: #3f3f46;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .submit-btn:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+
+  .submit-btn:disabled {
+    background: #52525b;
+    cursor: not-allowed;
+  }
+
+  .message {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .message.success {
+    background: #10b981;
+    color: white;
+    border: 1px solid #059669;
+  }
+
+  .message.error {
+    background: #ef4444;
+    color: white;
+    border: 1px solid #dc2626;
+  }
+
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+    
+    .upload-form {
+      padding: 1rem;
+      margin: 1rem;
+    }
+  }
+</style>
+
+<script>
+  const fileInput = document.getElementById('image') as HTMLInputElement;
+  const fileText = document.getElementById('fileText') as HTMLSpanElement;
+  
+  if (fileInput && fileText) {
+    fileInput.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      fileText.textContent = file ? file.name : 'Choose file...';
+    });
+  }
+
+  const form = document.getElementById('uploadForm') as HTMLFormElement;
+  const submitBtn = document.getElementById('submitBtn') as HTMLButtonElement;
+  const message = document.getElementById('message') as HTMLDivElement;
+
+  if (form && submitBtn && message) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Uploading...';
+      message.style.display = 'none';
+
+      const formData = new FormData(form);
+      
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        let result;
+        try {
+          result = await response.json();
+        } catch (parseError) {
+          message.textContent = `Upload failed - Invalid response (${response.status})`;
+          message.className = 'message error';
+          message.style.display = 'block';
+          return;
+        }
+
+        if (response.ok) {
+
+          form.style.display = 'none';
+          const successMenu = document.getElementById('successMenu');
+          if (successMenu) {
+            successMenu.style.display = 'block';
+          }
+        } else {
+          message.textContent = result.error || `Upload failed (${response.status})`;
+          message.className = 'message error';
+        }
+        message.style.display = 'block';
+      } catch (error) {
+        console.error('Upload error:', error);
+        message.textContent = 'Upload failed - Network error';
+        message.className = 'message error';
+        message.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Upload Image';
+      }
+    });
+  }
+
+
+  function resetForm() {
+    const form = document.getElementById('uploadForm') as HTMLFormElement;
+    const successMenu = document.getElementById('successMenu');
+    const fileText = document.getElementById('fileText');
+    const message = document.getElementById('message');
+    
+    if (form) {
+      form.reset();
+      form.style.display = 'block';
+    }
+    
+    if (successMenu) {
+      successMenu.style.display = 'none';
+    }
+    
+    if (fileText) {
+      fileText.textContent = 'Choose file...';
+    }
+    
+    if (message) {
+      message.style.display = 'none';
+    }
+  }
+
+  globalThis.resetForm = resetForm;
+</script>
