@@ -26,7 +26,7 @@ export function sanitizeAircraftType(type: string | null | undefined): string {
   sanitized = validator.trim(sanitized);
   
 
-  return validator.isAlphanumeric(sanitized) ? sanitized.toUpperCase() : '';
+  return validator.isAlphanumeric(sanitized, 'en-US', {ignore: ' '}) ? sanitized.toUpperCase() : '';
 }
 
 export function sanitizeDate(input: string | null | undefined): Date | null {

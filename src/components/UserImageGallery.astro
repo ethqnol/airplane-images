@@ -3,11 +3,9 @@ import '../styles/gallery.css';
 
 interface Props {
   userId: string;
-  aircraftType?: string;
-  titleSearch?: string;
 }
 
-const { userId, aircraftType, titleSearch } = Astro.props;
+const { userId } = Astro.props;
 
 
 const params = new URLSearchParams({
@@ -15,9 +13,6 @@ const params = new URLSearchParams({
   limit: '12',
   userId: userId,
 });
-
-if (aircraftType) params.append('aircraftType', aircraftType);
-if (titleSearch) params.append('title', titleSearch);
 
 const baseUrl = Astro.url.origin;
 console.log('UserImageGallery - Fetching with params:', params.toString());
@@ -56,25 +51,40 @@ function formatDate(dateString: string) {
     </div>
   ) : (
     <>
-      <div class="image-grid">
+      <div class="images-table">
+        <div class="table-header">
+          <div class="col-thumbnail">Image</div>
+          <div class="col-title">Title</div>
+          <div class="col-aircraft">Aircraft</div>
+          <div class="col-date">Uploaded</div>
+          <div class="col-actions">Actions</div>
+        </div>
         {images.map((image: any) => (
-          <div class="image-card" data-image-id={image.id}>
-            <img
-              src={`/api/images/${image.r2_key}`}
-              alt={image.title || image.original_name}
-              loading="lazy"
-            />
-            <div class="image-info">
-              <h3>{image.title || image.original_name}</h3>
-              {image.aircraft_type && (
-                <p class="aircraft-type">{image.aircraft_type}</p>
+          <div class="table-row" data-image-id={image.id}>
+            <div class="col-thumbnail">
+              <img
+                src={`/api/images/${image.r2_key}`}
+                alt={image.title || image.original_name}
+                loading="lazy"
+                class="thumbnail"
+                onclick={`viewImageModal('${image.id}')`}
+              />
+            </div>
+            <div class="col-title">
+              <div class="title-text">{image.title || image.original_name}</div>
+              {image.description && (
+                <div class="description-text">{image.description}</div>
               )}
-              <div class="meta">
-                <span class="date">{formatDate(image.uploaded_at)}</span>
-                <button class="delete-btn" data-image-id={image.id} data-image-title={image.title || image.original_name}>
-                  🗑️ Delete
-                </button>
-              </div>
+            </div>
+            <div class="col-aircraft">
+              {image.aircraft_type || '-'}
+            </div>
+            <div class="col-date">
+              {formatDate(image.uploaded_at)}
+            </div>
+            <div class="col-actions">
+              <button class="edit-btn" data-image-id={image.id}>Edit</button>
+              <button class="delete-btn" data-image-id={image.id} data-image-title={image.title || image.original_name}>Delete</button>
             </div>
             
             <script type="application/json" class="image-data" set:html={JSON.stringify({
@@ -126,7 +136,8 @@ function formatDate(dateString: string) {
         <div class="modal-header">
           <h2 id="modalTitle"></h2>
           <div class="modal-actions" id="modalActions" style="display: none;">
-            <button class="delete-modal-btn" id="deleteModalBtn">🗑️ Delete Image</button>
+            <button class="edit-modal-btn" id="editModalBtn">Edit</button>
+            <button class="delete-modal-btn" id="deleteModalBtn">Delete</button>
           </div>
         </div>
         <p id="modalDescription" class="description" style="display: none;"></p>
@@ -134,6 +145,39 @@ function formatDate(dateString: string) {
         <div class="details" id="modalDetails">
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content edit-modal">
+      <h3>Edit Image Details</h3>
+      <form id="editForm">
+        <div class="form-group">
+          <label for="editTitle">Title:</label>
+          <input type="text" id="editTitle" name="title" maxlength="200">
+        </div>
+        <div class="form-group">
+          <label for="editDescription">Description:</label>
+          <textarea id="editDescription" name="description" rows="3" maxlength="1000"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="editAircraftType">Aircraft Type:</label>
+          <input type="text" id="editAircraftType" name="aircraftType" maxlength="50">
+        </div>
+        <div class="form-group">
+          <label for="editLocation">Location:</label>
+          <input type="text" id="editLocation" name="location" maxlength="100">
+        </div>
+        <div class="form-group">
+          <label for="editDateTaken">Date Taken:</label>
+          <input type="date" id="editDateTaken" name="dateTaken">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" id="cancelEditBtn">Cancel</button>
+          <button type="submit" class="save-btn">Save Changes</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -180,59 +224,103 @@ function formatDate(dateString: string) {
     background: #1d4ed8;
   }
 
-  .image-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
+  .images-table {
+    background: #18181b;
+    border-radius: 12px;
+    border: 1px solid #27272a;
+    overflow: hidden;
     margin-bottom: 3rem;
   }
 
-  .image-card {
-    background: #18181b;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    border: 1px solid #27272a;
-  }
-
-  .image-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    border-color: #3f3f46;
-  }
-
-  .image-card img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-  }
-
-  .image-info {
+  .table-header {
+    display: grid;
+    grid-template-columns: 80px 1fr 150px 120px 140px;
+    gap: 1rem;
     padding: 1rem;
-  }
-
-  .image-info h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.1rem;
+    background: #27272a;
+    font-weight: 600;
     color: #f4f4f5;
-    line-height: 1.3;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #3f3f46;
   }
 
-  .aircraft-type {
-    margin: 0 0 0.75rem 0;
+  .table-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 150px 120px 140px;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid #27272a;
+    align-items: center;
+    transition: background-color 0.2s;
+  }
+
+  .table-row:hover {
+    background: rgba(39, 39, 42, 0.5);
+  }
+
+  .table-row:last-child {
+    border-bottom: none;
+  }
+
+  .thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .thumbnail:hover {
+    transform: scale(1.1);
+  }
+
+  .title-text {
+    font-weight: 500;
+    color: #f4f4f5;
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+  }
+
+  .description-text {
+    color: #a1a1aa;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .col-aircraft {
     color: #60a5fa;
     font-weight: 500;
     font-size: 0.9rem;
   }
 
-  .meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
+  .col-date {
     color: #a1a1aa;
+    font-size: 0.85rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .edit-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .edit-btn:hover {
+    background: #1d4ed8;
   }
 
   .delete-btn {
@@ -347,6 +435,21 @@ function formatDate(dateString: string) {
     flex-shrink: 0;
   }
 
+  .edit-modal-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .edit-modal-btn:hover {
+    background: #1d4ed8;
+  }
+
   .delete-modal-btn {
     background: #dc3545;
     color: white;
@@ -396,6 +499,62 @@ function formatDate(dateString: string) {
   .detail strong {
     min-width: 100px;
     color: #e4e4e7;
+  }
+
+  .edit-modal {
+    max-width: 500px;
+    width: 90vw;
+    padding: 2rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #e4e4e7;
+    font-weight: 500;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #3f3f46;
+    border-radius: 6px;
+    background: #27272a;
+    color: #f4f4f5;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+  }
+
+  .save-btn {
+    padding: 0.75rem 1.5rem;
+    background: #16a34a;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .save-btn:hover {
+    background: #15803d;
   }
 
   .delete-modal {
@@ -455,9 +614,24 @@ function formatDate(dateString: string) {
       padding: 1rem;
     }
 
-    .image-grid {
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1rem;
+    .table-header,
+    .table-row {
+      grid-template-columns: 60px 1fr 100px 90px 110px;
+      gap: 0.5rem;
+      padding: 0.75rem;
+    }
+
+    .thumbnail {
+      width: 50px;
+      height: 50px;
+    }
+
+    .title-text {
+      font-size: 0.85rem;
+    }
+
+    .description-text {
+      font-size: 0.75rem;
     }
 
     .pagination {
@@ -521,7 +695,7 @@ function formatDate(dateString: string) {
   }
 
 
-  const imageCards = document.querySelectorAll('.image-card');
+  const tableRows = document.querySelectorAll('.table-row');
   const modal = document.getElementById('modal');
   const modalClose = document.getElementById('modalClose');
   const modalImage = document.getElementById('modalImage');
@@ -529,23 +703,32 @@ function formatDate(dateString: string) {
   const modalDescription = document.getElementById('modalDescription');
   const modalDetails = document.getElementById('modalDetails');
   const modalActions = document.getElementById('modalActions');
+  const editModalBtn = document.getElementById('editModalBtn');
   const deleteModalBtn = document.getElementById('deleteModalBtn');
 
+  // Edit modal elements
+  const editModal = document.getElementById('editModal');
+  const editForm = document.getElementById('editForm');
+  const editTitle = document.getElementById('editTitle');
+  const editDescription = document.getElementById('editDescription');
+  const editAircraftType = document.getElementById('editAircraftType');
+  const editLocation = document.getElementById('editLocation');
+  const editDateTaken = document.getElementById('editDateTaken');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
 
+  // Delete modal elements
   const deleteModal = document.getElementById('deleteModal');
   const deleteImageTitle = document.getElementById('deleteImageTitle');
   const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
   const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
   let currentImageId = null;
+  let currentImageData = null;
 
-  imageCards.forEach(card => {
-    card.addEventListener('click', (e) => {
-      if (e.target.classList.contains('delete-btn')) {
-        return;
-      }
-
-      const dataScript = card.querySelector('.image-data');
+  function viewImageModal(imageId) {
+    const row = document.querySelector(`[data-image-id="${imageId}"]`);
+    if (row) {
+      const dataScript = row.querySelector('.image-data');
       if (dataScript) {
         const imageData = JSON.parse(dataScript.textContent || '{}');
         
@@ -553,6 +736,7 @@ function formatDate(dateString: string) {
         modalImage.alt = imageData.title;
         modalTitle.textContent = imageData.title;
         currentImageId = imageData.id;
+        currentImageData = imageData;
         
         if (imageData.description) {
           modalDescription.textContent = imageData.description;
@@ -588,10 +772,45 @@ function formatDate(dateString: string) {
 
         modal.style.display = 'flex';
       }
+    }
+  }
+
+  // Make viewImageModal globally available
+  window.viewImageModal = viewImageModal;
+
+
+
+  // Handle edit button clicks
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const imageId = btn.getAttribute('data-image-id');
+      const card = btn.closest('.image-card');
+      const dataScript = card.querySelector('.image-data');
+      
+      if (dataScript) {
+        const imageData = JSON.parse(dataScript.textContent || '{}');
+        currentImageId = imageId;
+        currentImageData = imageData;
+        
+        // Populate edit form
+        editTitle.value = imageData.title || '';
+        editDescription.value = imageData.description || '';
+        editAircraftType.value = imageData.aircraft_type || '';
+        editLocation.value = imageData.location || '';
+        if (imageData.date_taken) {
+          const date = new Date(imageData.date_taken);
+          editDateTaken.value = date.toISOString().split('T')[0];
+        } else {
+          editDateTaken.value = '';
+        }
+        
+        editModal.style.display = 'flex';
+      }
     });
   });
 
-
+  // Handle delete button clicks
   document.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -604,6 +823,27 @@ function formatDate(dateString: string) {
     });
   });
 
+  // Handle edit from modal
+  editModalBtn?.addEventListener('click', () => {
+    if (currentImageData) {
+      // Populate edit form
+      editTitle.value = currentImageData.title || '';
+      editDescription.value = currentImageData.description || '';
+      editAircraftType.value = currentImageData.aircraft_type || '';
+      editLocation.value = currentImageData.location || '';
+      if (currentImageData.date_taken) {
+        const date = new Date(currentImageData.date_taken);
+        editDateTaken.value = date.toISOString().split('T')[0];
+      } else {
+        editDateTaken.value = '';
+      }
+      
+      modal.style.display = 'none';
+      editModal.style.display = 'flex';
+    }
+  });
+
+  // Handle delete from modal
   deleteModalBtn?.addEventListener('click', () => {
     if (currentImageId) {
       const imageTitle = modalTitle.textContent;
@@ -623,9 +863,9 @@ function formatDate(dateString: string) {
 
       if (response.ok) {
 
-        const imageCard = document.querySelector(`[data-image-id="${currentImageId}"]`);
-        if (imageCard) {
-          imageCard.remove();
+        const tableRow = document.querySelector(`[data-image-id="${currentImageId}"]`);
+        if (tableRow) {
+          tableRow.remove();
         }
         
 
@@ -633,8 +873,8 @@ function formatDate(dateString: string) {
         modal.style.display = 'none';
         
 
-        const remainingCards = document.querySelectorAll('.image-card');
-        if (remainingCards.length === 0) {
+        const remainingRows = document.querySelectorAll('.table-row');
+        if (remainingRows.length === 0) {
           window.location.reload();
         }
       } else {
@@ -646,6 +886,90 @@ function formatDate(dateString: string) {
     }
 
     currentImageId = null;
+  });
+
+  // Handle edit form submission
+  editForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!currentImageId) return;
+
+    try {
+      const formData = new FormData(editForm);
+      
+      const response = await fetch(`/api/images/${currentImageId}`, {
+        method: 'PATCH',
+        body: formData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update the UI with new data
+        const tableRow = document.querySelector(`[data-image-id="${currentImageId}"]`);
+        if (tableRow) {
+          const titleElement = tableRow.querySelector('.title-text');
+          const descriptionElement = tableRow.querySelector('.description-text');
+          const aircraftElement = tableRow.querySelector('.col-aircraft');
+          const dataScript = tableRow.querySelector('.image-data');
+          
+          if (titleElement) {
+            titleElement.textContent = result.image.title || result.image.original_name;
+          }
+          
+          // Update or create description
+          if (result.image.description) {
+            if (!descriptionElement) {
+              const newDescElement = document.createElement('div');
+              newDescElement.className = 'description-text';
+              newDescElement.textContent = result.image.description;
+              titleElement.parentNode.appendChild(newDescElement);
+            } else {
+              descriptionElement.textContent = result.image.description;
+            }
+          } else if (descriptionElement) {
+            descriptionElement.remove();
+          }
+          
+          if (aircraftElement) {
+            aircraftElement.textContent = result.image.aircraft_type || '-';
+          }
+          
+          // Update the data script
+          if (dataScript) {
+            const updatedData = {
+              id: result.image.id,
+              r2_key: result.image.r2_key,
+              title: result.image.title || result.image.original_name,
+              description: result.image.description,
+              aircraft_type: result.image.aircraft_type,
+              location: result.image.location,
+              date_taken: result.image.date_taken,
+              user_name: result.image.user_name,
+              uploaded_at: result.image.uploaded_at,
+              is_owner: true
+            };
+            dataScript.textContent = JSON.stringify(updatedData);
+          }
+        }
+        
+        editModal.style.display = 'none';
+        currentImageId = null;
+        currentImageData = null;
+      } else {
+        alert('Failed to update image. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating image:', error);
+      alert('Failed to update image. Please try again.');
+    }
+  });
+
+  // Handle edit cancel
+  cancelEditBtn?.addEventListener('click', () => {
+    editModal.style.display = 'none';
+    currentImageId = null;
+    currentImageData = null;
   });
 
 
@@ -665,6 +989,12 @@ function formatDate(dateString: string) {
     }
   });
 
+  editModal?.addEventListener('click', (e) => {
+    if (e.target === editModal) {
+      editModal.style.display = 'none';
+    }
+  });
+
   deleteModal?.addEventListener('click', (e) => {
     if (e.target === deleteModal) {
       deleteModal.style.display = 'none';
@@ -676,6 +1006,9 @@ function formatDate(dateString: string) {
     if (e.key === 'Escape') {
       if (modal.style.display === 'flex') {
         modal.style.display = 'none';
+      }
+      if (editModal.style.display === 'flex') {
+        editModal.style.display = 'none';
       }
       if (deleteModal.style.display === 'flex') {
         deleteModal.style.display = 'none';

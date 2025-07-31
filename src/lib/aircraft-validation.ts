@@ -39,7 +39,7 @@ const aircraftData = [
   { icao: "B78X", iata: "788", name: "Boeing 787-8" },
   { icao: "B789", iata: "789", name: "Boeing 787-9" },
   { icao: "B78J", iata: "781", name: "Boeing 787-10" },
-  { icao: "Other", iata: "Other", name: "Other"}
+  { icao: "OTHER", iata: "OTHER", name: "OTHER"}
 ];
 
 export async function getValidAircraftTypes(): Promise<string[]> {
@@ -47,6 +47,7 @@ export async function getValidAircraftTypes(): Promise<string[]> {
 }
 
 export async function isValidAircraftType(icaoCode: string): Promise<boolean> {
+  console.log(icaoCode)
   if (!icaoCode) return true; 
   
   const validTypes = await getValidAircraftTypes();

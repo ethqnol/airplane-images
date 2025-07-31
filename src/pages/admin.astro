@@ -1,0 +1,552 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { isAdmin } from '../lib/auth';
+
+const user = Astro.locals.user;
+
+if (!user || !isAdmin(user)) {
+  return Astro.redirect('/signin');
+}
+
+// Stats will be loaded client-side
+---
+
+<Layout title="Admin Console - Airplane Images">
+  <main class="admin-container">
+    <div class="admin-header">
+      <h1>Admin Console</h1>
+      <p>Welcome back, {user.name}</p>
+    </div>
+
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h2>Statistics</h2>
+        <div id="statsContainer">
+          Loading statistics...
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>User Accounts</h2>
+        <div id="userList" class="user-list">
+          Loading users...
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</Layout>
+
+<style>
+  .admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .admin-header {
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+
+  .admin-header h1 {
+    font-size: 2.5rem;
+    color: #f4f4f5;
+    margin-bottom: 0.5rem;
+  }
+
+  .admin-header p {
+    color: #a1a1aa;
+    font-size: 1.1rem;
+  }
+
+  .admin-grid {
+    display: grid;
+    grid-template-columns: 300px 300px;
+    gap: 2rem;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .admin-card {
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 12px;
+    padding: 2rem;
+  }
+
+  .admin-card h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #f4f4f5;
+    font-size: 1.5rem;
+  }
+
+  .image-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: center;
+  }
+
+  .image-controls input,
+  .image-controls select {
+    padding: 0.5rem;
+    border: 1px solid #3f3f46;
+    border-radius: 6px;
+    background: #27272a;
+    color: #f4f4f5;
+  }
+
+  .image-controls input {
+    flex: 1;
+  }
+
+  .user-list {
+    max-height: 500px;
+    overflow-y: auto;
+    background: #18181b;
+    border-radius: 12px;
+    border: 1px solid #27272a;
+    overflow: hidden;
+  }
+
+  .user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid #27272a;
+    transition: background-color 0.2s;
+  }
+
+  .user-item:hover {
+    background: rgba(39, 39, 42, 0.5);
+  }
+
+  .user-item:last-child {
+    border-bottom: none;
+  }
+
+  .user-info {
+    flex: 1;
+  }
+
+  .user-name {
+    font-weight: 600;
+    color: #f4f4f5;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .user-email {
+    color: #a1a1aa;
+    font-size: 0.9rem;
+    font-family: monospace;
+  }
+
+  .user-stats {
+    background: #27272a;
+    color: #60a5fa;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    border: 1px solid #3f3f46;
+  }
+
+  .admin-images-container {
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .admin-images-table {
+    background: #18181b;
+    border-radius: 12px;
+    border: 1px solid #27272a;
+    overflow: hidden;
+  }
+
+  .admin-table-header {
+    display: grid;
+    grid-template-columns: 80px 1fr 150px 120px 100px;
+    gap: 1rem;
+    padding: 1rem;
+    background: #27272a;
+    font-weight: 600;
+    color: #f4f4f5;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #3f3f46;
+  }
+
+  .admin-table-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 150px 120px 100px;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid #27272a;
+    align-items: center;
+    transition: background-color 0.2s;
+  }
+
+  .admin-table-row:hover {
+    background: rgba(39, 39, 42, 0.5);
+  }
+
+  .admin-table-row:last-child {
+    border-bottom: none;
+  }
+
+  .admin-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .admin-thumbnail:hover {
+    transform: scale(1.1);
+  }
+
+  .admin-title-text {
+    font-weight: 500;
+    color: #f4f4f5;
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+  }
+
+  .admin-description-text {
+    color: #a1a1aa;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .admin-user-name {
+    font-weight: 500;
+    color: #f4f4f5;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .admin-user-email {
+    color: #a1a1aa;
+    font-size: 0.8rem;
+  }
+
+  .admin-aircraft {
+    color: #60a5fa;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .admin-date {
+    color: #a1a1aa;
+    font-size: 0.85rem;
+  }
+
+  .delete-preview {
+    margin-bottom: 1rem;
+  }
+
+  .delete-preview img {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 6px;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+  }
+
+  .modal-content {
+    background: #18181b;
+    border-radius: 12px;
+    border: 1px solid #27272a;
+  }
+
+  .delete-modal {
+    max-width: 400px;
+    width: 90vw;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .delete-modal h3 {
+    margin-top: 0;
+    color: #f4f4f5;
+  }
+
+  .warning {
+    color: #dc3545;
+    font-weight: 500;
+    margin-bottom: 2rem;
+  }
+
+  .delete-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .cancel-btn {
+    padding: 0.75rem 1.5rem;
+    background: #52525b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .cancel-btn:hover {
+    background: #3f3f46;
+  }
+
+  .confirm-delete-btn {
+    padding: 0.75rem 1.5rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .confirm-delete-btn:hover {
+    background: #c82333;
+  }
+
+  .admin-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .admin-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .admin-btn.danger {
+    background: #dc3545;
+    color: white;
+  }
+
+  .admin-btn.danger:hover {
+    background: #c82333;
+  }
+
+  .admin-btn.warning {
+    background: #f59e0b;
+    color: white;
+  }
+
+  .admin-btn.warning:hover {
+    background: #d97706;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .stat {
+    text-align: center;
+    padding: 1rem;
+    background: #27272a;
+    border-radius: 8px;
+  }
+
+  .stat-number {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-label {
+    color: #a1a1aa;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 768px) {
+    .admin-container {
+      padding: 1rem;
+    }
+
+    .admin-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .user-item {
+      padding: 1rem;
+    }
+
+    .user-name {
+      font-size: 0.95rem;
+    }
+
+    .user-email {
+      font-size: 0.85rem;
+    }
+
+    .full-width {
+      grid-column: 1;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .image-controls {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .admin-table-header,
+    .admin-table-row {
+      grid-template-columns: 60px 1fr 120px 90px 80px;
+      gap: 0.5rem;
+      padding: 0.75rem;
+    }
+
+    .admin-thumbnail {
+      width: 50px;
+      height: 50px;
+    }
+
+    .admin-title-text {
+      font-size: 0.85rem;
+    }
+
+    .admin-description-text,
+    .admin-user-email {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+
+  async function loadUsers() {
+    try {
+      const response = await fetch('/api/admin/users', {
+        credentials: 'same-origin'
+      });
+      if (response.ok) {
+        const users = await response.json();
+        console.log('Users response:', users);
+        const userList = document.getElementById('userList');
+        
+        if (!Array.isArray(users)) {
+          console.error('Users response is not an array:', typeof users, users);
+          userList.innerHTML = '<p>Invalid response format</p>';
+          return;
+        }
+        
+        if (users.length === 0) {
+          userList.innerHTML = '<p>No users found</p>';
+          return;
+        }
+
+        userList.innerHTML = users.map(user => `
+          <div class="user-item">
+            <div class="user-info">
+              <div class="user-name">${user.name}</div>
+              <div class="user-email">${user.email}</div>
+            </div>
+            <div class="user-stats">${user.image_count} images</div>
+          </div>
+        `).join('');
+      } else {
+        const errorText = await response.text();
+        console.error('Users error:', response.status, errorText);
+        document.getElementById('userList').innerHTML = `<p>Failed to load users (${response.status})</p>`;
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+      document.getElementById('userList').innerHTML = '<p>Error loading users</p>';
+    }
+  }
+
+
+
+
+  async function loadStats() {
+    try {
+      const response = await fetch('/api/admin/stats', {
+        credentials: 'same-origin'
+      });
+      if (response.ok) {
+        const stats = await response.json();
+        const statsContainer = document.getElementById('statsContainer');
+        
+        statsContainer.innerHTML = `
+          <div class="stats-grid">
+            <div class="stat">
+              <span class="stat-number">${stats.totalImages}</span>
+              <span class="stat-label">Total Images</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${stats.totalUsers}</span>
+              <span class="stat-label">Total Users</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${stats.imagesLastWeek}</span>
+              <span class="stat-label">Images This Week</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">${stats.newUsersLastWeek}</span>
+              <span class="stat-label">New Users This Week</span>
+            </div>
+          </div>
+        `;
+      } else {
+        const errorText = await response.text();
+        console.error('Stats error:', response.status, errorText);
+        document.getElementById('statsContainer').innerHTML = `<p>Unable to load statistics (${response.status})</p>`;
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+      document.getElementById('statsContainer').innerHTML = '<p>Error loading statistics</p>';
+    }
+  }
+
+  // Event listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    loadStats();
+    loadUsers();
+  });
+</script>

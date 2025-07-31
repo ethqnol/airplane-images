@@ -155,3 +155,7 @@ export function setSessionCookie(token: string): string {
 export function clearSessionCookie(): string {
   return 'session=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax';
 }
+
+export function isAdmin(user: User | null): boolean {
+  return user?.email === 'drinkfood.exe@gmail.com';
+}

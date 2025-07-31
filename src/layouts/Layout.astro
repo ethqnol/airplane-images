@@ -1,4 +1,6 @@
 ---
+import { isAdmin } from '../lib/auth';
+
 export interface Props {
   title: string;
 }
@@ -29,6 +31,9 @@ const user = Astro.locals.user;
             <>
               <a href="/upload" class="nav-link">Upload</a>
               <a href="/my-images" class="nav-link">My Images</a>
+              {isAdmin(user) && (
+                <a href="/admin" class="nav-link admin-link">Admin</a>
+              )}
               <div class="user-menu">
                 {user.picture ? (
                   <img 
@@ -213,6 +218,24 @@ const user = Astro.locals.user;
   .sign-out:hover {
     background: rgba(63, 63, 70, 0.8);
     color: #e4e4e7;
+  }
+
+  .admin-link {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white !important;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+
+  .admin-link:hover {
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
   }
 
   .footer {

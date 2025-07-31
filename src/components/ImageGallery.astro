@@ -1,5 +1,6 @@
 ---
 import '../styles/gallery.css';
+import { isAdmin } from '../lib/auth';
 
 interface Props {
   userId?: string;
@@ -8,6 +9,8 @@ interface Props {
 }
 
 const { userId, aircraftType, titleSearch } = Astro.props;
+const user = Astro.locals.user;
+const showAdminControls = isAdmin(user);
 
 const params = new URLSearchParams({
   page: '1',
@@ -64,8 +67,13 @@ function formatDate(dateString: string) {
                 <p class="aircraft-type">{image.aircraft_type}</p>
               )}
               <div class="meta">
-                <span class="user">📸 {image.user_name}</span>
+                <span class="user">{image.user_name}</span>
                 <span class="date">{formatDate(image.uploaded_at)}</span>
+                {showAdminControls && (
+                  <button class="admin-delete-btn" data-image-id={image.id} data-image-title={image.title || image.original_name}>
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
             
@@ -190,6 +198,24 @@ function formatDate(dateString: string) {
     align-items: center;
     font-size: 0.8rem;
     color: #a1a1aa;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .admin-delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-left: auto;
+  }
+
+  .admin-delete-btn:hover {
+    background: #c82333;
   }
 
   .pagination {
@@ -424,5 +450,45 @@ function formatDate(dateString: string) {
     if (e.key === 'Escape' && modal!.style.display === 'flex') {
       modal!.style.display = 'none';
     }
+  });
+
+  // Handle admin delete buttons
+  document.querySelectorAll('.admin-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      
+      const imageId = btn.getAttribute('data-image-id');
+      const imageTitle = btn.getAttribute('data-image-title');
+      
+      if (!confirm(`Are you sure you want to delete "${imageTitle}"? This action cannot be undone.`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/admin/delete-image/${imageId}`, {
+          method: 'DELETE',
+          credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+          // Remove the image card from the DOM
+          const imageCard = btn.closest('.image-card');
+          if (imageCard) {
+            imageCard.remove();
+          }
+          
+          // Check if page is now empty
+          const remainingCards = document.querySelectorAll('.image-card');
+          if (remainingCards.length === 0) {
+            window.location.reload();
+          }
+        } else {
+          alert('Failed to delete image. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error deleting image:', error);
+        alert('Failed to delete image. Please try again.');
+      }
+    });
   });
 </script>
