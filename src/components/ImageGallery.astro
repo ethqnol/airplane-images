@@ -471,8 +471,8 @@ function formatDate(dateString: string) {
         });
         
         if (response.ok) {
-          // Remove the image card from the DOM
-          const imageCard = btn.closest('.image-card');
+          // Find and remove the image card from the DOM
+          const imageCard = document.querySelector(`[data-image-id="${imageId}"]`);
           if (imageCard) {
             imageCard.remove();
           }

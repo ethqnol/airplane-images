@@ -785,28 +785,35 @@ function formatDate(dateString: string) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const imageId = btn.getAttribute('data-image-id');
-      const card = btn.closest('.image-card');
-      const dataScript = card.querySelector('.image-data');
-      
-      if (dataScript) {
-        const imageData = JSON.parse(dataScript.textContent || '{}');
-        currentImageId = imageId;
-        currentImageData = imageData;
-        
-        // Populate edit form
-        editTitle.value = imageData.title || '';
-        editDescription.value = imageData.description || '';
-        editAircraftType.value = imageData.aircraft_type || '';
-        editLocation.value = imageData.location || '';
-        if (imageData.date_taken) {
-          const date = new Date(imageData.date_taken);
-          editDateTaken.value = date.toISOString().split('T')[0];
-        } else {
-          editDateTaken.value = '';
-        }
-        
-        editModal.style.display = 'flex';
+      const row = btn.closest('.table-row');
+      if (!row) {
+        console.error('Could not find table row for edit button');
+        return;
       }
+      
+      const dataScript = row.querySelector('.image-data');
+      if (!dataScript) {
+        console.error('Could not find image data script');
+        return;
+      }
+      
+      const imageData = JSON.parse(dataScript.textContent || '{}');
+      currentImageId = imageId;
+      currentImageData = imageData;
+      
+      // Populate edit form
+      editTitle.value = imageData.title || '';
+      editDescription.value = imageData.description || '';
+      editAircraftType.value = imageData.aircraft_type || '';
+      editLocation.value = imageData.location || '';
+      if (imageData.date_taken) {
+        const date = new Date(imageData.date_taken);
+        editDateTaken.value = date.toISOString().split('T')[0];
+      } else {
+        editDateTaken.value = '';
+      }
+      
+      editModal.style.display = 'flex';
     });
   });
 
